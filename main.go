@@ -13,6 +13,8 @@ func main() {
 	mux := http.NewServeMux()
 	// handle / route to serve a static html file from the root directory
 	mux.Handle("/", http.FileServer(http.Dir(FILE_ROOT_PATH)))
+	// serving the logo url path should match with the directory path
+	mux.Handle("/assets/", http.FileServer(http.Dir(FILE_ROOT_PATH)))
 	corsMux := middlewareCors(mux)
 
 	srv := &http.Server{
@@ -20,7 +22,7 @@ func main() {
 		Addr: 	":" + PORT,
 	}
 
-	log.Printf("Serving files from %s on port: %s\n", filepathRoot, port)
+	log.Printf("Serving files from %s on port: %s\n", FILE_ROOT_PATH, PORT)
 	log.Printf("Serving on port : %s\n", PORT)
 	// listen and serve
 	log.Fatal(srv.ListenAndServe())
