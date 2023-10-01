@@ -5,6 +5,27 @@ import (
 	"net/http"
 )
 
+func main() {
+	const FILE_ROOT_PATH = "."
+	const PORT = "8000"
+
+	// create a new server mux
+	mux := http.NewServeMux()
+	// handle / route to serve a static html file from the root directory
+	mux.Handle("/", http.FileServer(http.Dir(FILE_ROOT_PATH)))
+	corsMux := middlewareCors(mux)
+
+	srv := &http.Server{
+		Handler: corsMux,
+		Addr: 	":" + PORT,
+	}
+
+	log.Printf("Serving files from %s on port: %s\n", filepathRoot, port)
+	log.Printf("Serving on port : %s\n", PORT)
+	// listen and serve
+	log.Fatal(srv.ListenAndServe())
+}
+
 func middlewareCors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -16,20 +37,4 @@ func middlewareCors(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
-}
-
-func main() {
-	const PORT = "8000"
-
-	mux := http.NewServeMux()
-	corsMux := middlewareCors(mux)
-
-	srv := &http.Server{
-		Handler: corsMux,
-		Addr: 	":" + PORT,
-	}
-
-	log.Printf("Serving on port : %s\n", PORT)
-	// listen and serve
-	log.Fatal(srv.ListenAndServe())
 }
