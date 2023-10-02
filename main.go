@@ -11,10 +11,11 @@ func main() {
 
 	// create a new server mux
 	mux := http.NewServeMux()
-	// handle / route to serve a static html file from the root directory
-	mux.Handle("/", http.FileServer(http.Dir(FILE_ROOT_PATH)))
-	// serving the logo url path should match with the directory path
-	mux.Handle("/assets/", http.FileServer(http.Dir(FILE_ROOT_PATH)))
+
+	mux.Handle("/app/", http.StripPrefix("/app/", http.FileServer(http.Dir(FILE_ROOT_PATH))))
+
+	mux.HandleFunc("/healthz", handlerReadiness)	
+
 	corsMux := middlewareCors(mux)
 
 	srv := &http.Server{
@@ -23,20 +24,12 @@ func main() {
 	}
 
 	log.Printf("Serving files from %s on port: %s\n", FILE_ROOT_PATH, PORT)
-	log.Printf("Serving on port : %s\n", PORT)
 	// listen and serve
 	log.Fatal(srv.ListenAndServe())
 }
 
-func middlewareCors(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "*")
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
+func handlerReadiness(w http.ResponseWriter, r *http.Request){
+	w.Header().Add("Content-Type", "text/plain; charset=utf-8") // normal header
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(http.StatusText(http.StatusOK)))
 }
