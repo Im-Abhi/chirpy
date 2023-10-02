@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
+	"regexp"
+	"encoding/json"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -62,7 +64,7 @@ func handlerChirpsValidate(w http.ResponseWriter, r *http.Request) {
 
 	// struct to return json value if valid
 	type returnVals struct {
-		Valid bool `json:"valid"`
+		CleanedBody string `json:"cleaned_body"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -83,7 +85,7 @@ func handlerChirpsValidate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusOK, returnVals{
-		Valid: true,
+		CleanedBody: getCleanedBody(params.Body),
 	})
 }
 
@@ -110,3 +112,9 @@ func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
 	w.WriteHeader(code)
 	w.Write(dat)
 }
+
+func getCleanedBody(s string) string {
+	res := `(?i)kerfuffle|(?i)sharbert|(?i)fornax`
+	re := regexp.MustCompile(res)
+	return re.ReplaceAllString(s, "****")
+} 
