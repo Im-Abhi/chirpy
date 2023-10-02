@@ -22,21 +22,23 @@ func main() {
 	// create a new router
 	router := chi.NewRouter()
 
-
 	fsHandler := apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(FILE_ROOT_PATH))))
 	router.Handle("/app/*", fsHandler)
 	router.Handle("/app", fsHandler)
 
 	// new api router
 	apiRouter := chi.NewRouter()
-
 	apiRouter.Get("/healthz", handlerReadiness)	
-	// handle the new handler
-	apiRouter.Get("/metrics", apiCfg.handlerMetrics)
 	// handler reset hit count
 	apiRouter.Get("/reset", apiCfg.handlerReset)
 	// mount the apiRouter router to r router through the /api route
 	router.Mount("/api", apiRouter)
+	// metric router
+	adminRouter := chi.NewRouter()
+
+	adminRouter.Get("/metrics", apiCfg.handlerMetrics)
+
+	router.Mount("/admin", adminRouter)
 
 	corsRouter := middlewareCors(router)
 
