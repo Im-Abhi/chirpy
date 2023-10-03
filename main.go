@@ -38,6 +38,7 @@ func main() {
 
 	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
 	apiRouter.Get("/chirps", apiCfg.handlerChirpsRetrieve)	
+	apiRouter.Get("/chirps/{chirpID}", apiCfg.handlerChirpsGet)	
 	// mount the apiRouter router to r router through the /api route
 	router.Mount("/api", apiRouter)
 	// metric router
