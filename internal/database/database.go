@@ -16,10 +16,16 @@ type DB struct {
 
 type DBStructure struct {
 	Chirps map[int]Chirp `json:"chirps"`
+	Users  map[int]User  `json:"users"`
 }
 
 type Chirp struct {
 	Body string `json:"body"`
+	ID   int    `json:"id"`
+}
+
+type User struct {
+	Email string `json:"email"`
 	ID   int    `json:"id"`
 }
 
@@ -56,6 +62,28 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 	return chirp, nil
 }
 
+// CreateUser creates a new user and saves it to disk
+func (db *DB) CreateUser(email string) (User, error) {
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return User{}, err
+	}
+
+	id := len(dbStructure.Users) + 1
+	user := User{
+		Email: email,
+		ID:   id,
+	}
+	dbStructure.Users[id] = user
+
+	err = db.writeDB(dbStructure)
+	if err != nil {
+		return User{}, err
+	}
+
+	return user, nil
+}
+
 func (db *DB) GetChirp(ID int) (Chirp, error) {
 	dbStructure, err := db.loadDB()
 	if err != nil {
@@ -88,6 +116,7 @@ func (db *DB) GetChirps() ([]Chirp, error) {
 func (db *DB) createDB() error {
 	dbStructure := DBStructure{
 		Chirps: map[int]Chirp{},
+		Users : map[int]User{},
 	}
 	return db.writeDB(dbStructure)
 }
