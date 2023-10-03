@@ -3,22 +3,24 @@ package main
 import (
 	"log"
 	"net/http"
-	"regexp"
-	"encoding/json"
 	"github.com/go-chi/chi/v5"
+	"github.com/Im-Abhi/chirpy/internal/database"
 )
 
 type apiConfig struct {
 	fileserverHits int
+	DB             *database.DB
 }
 
 func main() {
 	const FILE_ROOT_PATH = "."
 	const PORT = "8000"
 
+	db, _ := database.NewDB("database.json")
 	// create instance of apiConfig
 	apiCfg := apiConfig{
 		fileserverHits: 0,
+		DB: db,
 	}
 
 	// create a new router
@@ -34,7 +36,8 @@ func main() {
 	// handler reset hit count
 	apiRouter.Get("/reset", apiCfg.handlerReset)
 
-	apiRouter.Post("/validate_chirp", handlerChirpsValidate)
+	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
+	apiRouter.Get("/chirps", apiCfg.handlerChirpsRetrieve)	
 	// mount the apiRouter router to r router through the /api route
 	router.Mount("/api", apiRouter)
 	// metric router
@@ -55,66 +58,3 @@ func main() {
 	// listen and serve
 	log.Fatal(srv.ListenAndServe())
 }
-
-func handlerChirpsValidate(w http.ResponseWriter, r *http.Request) {
-	// struct for receiving json data
-	type parameters struct {
-		Body string `json:"body"`
-	}
-
-	// struct to return json value if valid
-	type returnVals struct {
-		CleanedBody string `json:"cleaned_body"`
-	}
-
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err := decoder.Decode(&params)
-
-	// if there was some error decoding the json received
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters")
-		return
-	}
-
-	const maxChirpLength = 140
-	// if the chirp length is too long
-	if len(params.Body) > maxChirpLength {
-		respondWithError(w, http.StatusBadRequest, "Chirp is too long")
-		return
-	}
-
-	respondWithJSON(w, http.StatusOK, returnVals{
-		CleanedBody: getCleanedBody(params.Body),
-	})
-}
-
-func respondWithError(w http.ResponseWriter, code int, msg string) {
-	if code > 499 {
-		log.Printf("Responding with 5XX error: %s", msg)
-	}
-	type errorResponse struct {
-		Error string `json:"error"`
-	}
-	respondWithJSON(w, code, errorResponse{
-		Error: msg,
-	})
-}
-
-func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	dat, err := json.Marshal(payload)
-	if err != nil {
-		log.Printf("Error marshalling JSON: %s", err)
-		w.WriteHeader(500)
-		return
-	}
-	w.WriteHeader(code)
-	w.Write(dat)
-}
-
-func getCleanedBody(s string) string {
-	res := `(?i)kerfuffle|(?i)sharbert|(?i)fornax`
-	re := regexp.MustCompile(res)
-	return re.ReplaceAllString(s, "****")
-} 
