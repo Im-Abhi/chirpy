@@ -8,8 +8,8 @@ import (
 )
 
 type Chirp struct {
+	ID   int    `json:"id"`
 	Body string `json:"body"`
-	ID int `json:"id"`
 }
 
 func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request) {
@@ -38,14 +38,13 @@ func (cfg *apiConfig) handlerChirpsCreate(w http.ResponseWriter, r *http.Request
 	}
 
 	respondWithJSON(w, http.StatusCreated, Chirp{
-		Body: chirp.Body,
 		ID:   chirp.ID,
+		Body: chirp.Body,
 	})
 }
 
 func validateChirp(body string) (string, error) {
 	const maxChirpLength = 140
-	// if the chirp length is too long
 	if len(body) > maxChirpLength {
 		return "", errors.New("Chirp is too long")
 	}

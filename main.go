@@ -41,6 +41,7 @@ func main() {
 	apiRouter.Get("/chirps/{chirpID}", apiCfg.handlerChirpsGet)	
 
 	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
+	apiRouter.Post("/login", apiCfg.handlerLogin)
 
 	// mount the apiRouter router to r router through the /api route
 	router.Mount("/api", apiRouter)
