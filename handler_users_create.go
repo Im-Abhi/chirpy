@@ -2,14 +2,26 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
-	"golang.org/x/crypto/bcrypt"
+
+	"github.com/Im-Abhi/chirpy/internal/auth"
+	"github.com/Im-Abhi/chirpy/internal/database"
 )
+
+type User struct {
+	ID       int    `json:"id"`
+	Email    string `json:"email"`
+	Password string `json:"-"`
+}
 
 func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Email string `json:"email"`
 		Password string `json:"password"`
+		Email    string `json:"email"`
+	}
+	type response struct {
+		User
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -20,24 +32,27 @@ func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(params.Password), bcrypt.DefaultCost)
+	hashedPassword, err := auth.HashPassword(params.Password)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't create user")
+		respondWithError(w, http.StatusInternalServerError, "Couldn't hash password")
 		return
 	}
-	
-	user, err := cfg.DB.CreateUser(params.Email, string(hashedPassword))
-	// if error is there -> could be possible that email already exists
+
+	user, err := cfg.DB.CreateUser(params.Email, hashedPassword)
 	if err != nil {
+		if errors.Is(err, database.ErrAlreadyExists) {
+			respondWithError(w, http.StatusConflict, "User already exists")
+			return
+		}
+
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create user")
 		return
 	}
 
-	respondWithJSON(w, http.StatusCreated, struct {
-		ID int `json:"id"`
-		Email string `json:"email"`
-	} {
-		ID:   user.ID,
-		Email: user.Email,
+	respondWithJSON(w, http.StatusCreated, response{
+		User: User{
+			ID:    user.ID,
+			Email: user.Email,
+		},
 	})
 }

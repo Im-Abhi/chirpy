@@ -3,6 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/joho/godotenv"
 	"github.com/go-chi/chi/v5"
 	"github.com/Im-Abhi/chirpy/internal/database"
 )
@@ -10,17 +13,33 @@ import (
 type apiConfig struct {
 	fileserverHits int
 	DB             *database.DB
+	jwtSecret	   string
 }
 
 func main() {
-	const FILE_ROOT_PATH = "."
-	const PORT = "8000"
+	// by default, godotenv will look for a file named .env in the current directory
+	godotenv.Load()
 
-	db, _ := database.NewDB("database.json")
+	const FILE_ROOT_PATH = "."
+	PORT := os.Getenv("PORT")
+	JWT_SECRET := os.Getenv("JWT_SECRET")
+
+	if JWT_SECRET == "" {
+		log.Fatal("JWT_SECRET environment variable is not set")
+	}
+
+	db, err := database.NewDB("database.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db.ResetDB()
+
 	// create instance of apiConfig
 	apiCfg := apiConfig{
 		fileserverHits: 0,
 		DB: db,
+		jwtSecret: JWT_SECRET,
 	}
 
 	// create a new router
@@ -41,6 +60,8 @@ func main() {
 	apiRouter.Get("/chirps/{chirpID}", apiCfg.handlerChirpsGet)	
 
 	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
+	apiRouter.Put("/users", apiCfg.handlerUsersUpdate)
+	
 	apiRouter.Post("/login", apiCfg.handlerLogin)
 
 	// mount the apiRouter router to r router through the /api route
