@@ -55,22 +55,22 @@ func main() {
 	// handler reset hit count
 	apiRouter.Get("/reset", apiCfg.handlerReset)
 
-	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
-	apiRouter.Get("/chirps", apiCfg.handlerChirpsRetrieve)	
-	apiRouter.Get("/chirps/{chirpID}", apiCfg.handlerChirpsGet)	
+	apiRouter.Post("/login", apiCfg.handlerLogin)
+	apiRouter.Post("/refresh", apiCfg.handlerRefresh)
+	apiRouter.Post("/revoke", apiCfg.handlerRevoke)
 
 	apiRouter.Post("/users", apiCfg.handlerUsersCreate)
 	apiRouter.Put("/users", apiCfg.handlerUsersUpdate)
-	
-	apiRouter.Post("/login", apiCfg.handlerLogin)
+
+	apiRouter.Post("/chirps", apiCfg.handlerChirpsCreate)
+	apiRouter.Get("/chirps", apiCfg.handlerChirpsRetrieve)	
+	apiRouter.Get("/chirps/{chirpID}", apiCfg.handlerChirpsGet)	
 
 	// mount the apiRouter router to r router through the /api route
 	router.Mount("/api", apiRouter)
 	// metric router
 	adminRouter := chi.NewRouter()
-
 	adminRouter.Get("/metrics", apiCfg.handlerMetrics)
-
 	router.Mount("/admin", adminRouter)
 
 	corsRouter := middlewareCors(router)
