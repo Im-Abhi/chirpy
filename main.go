@@ -11,9 +11,10 @@ import (
 )
 
 type apiConfig struct {
-	fileserverHits int
-	DB             *database.DB
-	jwtSecret	   string
+	fileserverHits 	int
+	DB             	*database.DB
+	jwtSecret	   	string
+	polkaKey		string
 }
 
 func main() {
@@ -23,9 +24,18 @@ func main() {
 	const FILE_ROOT_PATH = "."
 	PORT := os.Getenv("PORT")
 	JWT_SECRET := os.Getenv("JWT_SECRET")
+	POLKA_KEY := os.Getenv("POLKA_KEY")
+
+	if PORT == "" {
+		PORT = "8000"
+	}
 
 	if JWT_SECRET == "" {
 		log.Fatal("JWT_SECRET environment variable is not set")
+	}
+
+	if POLKA_KEY == "" {
+		log.Fatal("POLKA_KEY environment variable is not set")
 	}
 
 	db, err := database.NewDB("database.json")
@@ -38,8 +48,9 @@ func main() {
 	// create instance of apiConfig
 	apiCfg := apiConfig{
 		fileserverHits: 0,
-		DB: db,
-		jwtSecret: JWT_SECRET,
+		DB: 			db,
+		jwtSecret: 		JWT_SECRET,
+		polkaKey:		POLKA_KEY,
 	}
 
 	// create a new router

@@ -6,9 +6,21 @@ import (
 	"errors"
 
 	"github.com/Im-Abhi/chirpy/internal/database"
+	"github.com/Im-Abhi/chirpy/internal/auth"
 )
 
 func (cfg *apiConfig) handlerWebhook(w http.ResponseWriter, r *http.Request) {
+	apiKey, err := auth.GetAPIKey(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't find ApiKey")
+		return
+	}
+
+	if apiKey != cfg.polkaKey {
+		respondWithError(w, http.StatusUnauthorized, "Invalid POLKA_KEY")
+		return
+	}
+	
 	type parameters struct {
 		Event 	string 	`json:"event"`
 		Data  	struct {
@@ -18,7 +30,7 @@ func (cfg *apiConfig) handlerWebhook(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters")
 		return
