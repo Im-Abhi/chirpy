@@ -67,6 +67,8 @@ func main() {
 	apiRouter.Get("/chirps/{chirpID}", apiCfg.handlerChirpsGet)	
 	apiRouter.Delete("/chirps/{chirpID}", apiCfg.handlerChirpsDelete)	
 
+	apiRouter.Post("/polka/webhooks", apiCfg.handlerWebhook)
+
 	// mount the apiRouter router to r router through the /api route
 	router.Mount("/api", apiRouter)
 	// metric router
