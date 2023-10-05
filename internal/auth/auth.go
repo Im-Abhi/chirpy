@@ -97,6 +97,7 @@ func ValidateJWT(tokenString, tokenSecret string) (string, error) {
 		&claimsStruct,
 		func(token *jwt.Token) (interface{}, error) { return []byte(tokenSecret), nil },
 	)
+	
 	if err != nil {
 		return "", err
 	}
