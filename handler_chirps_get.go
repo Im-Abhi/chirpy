@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-
 	"github.com/go-chi/chi/v5"
 )
 
@@ -36,12 +35,26 @@ func (cfg *apiConfig) handlerChirpsRetrieve(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	authorID := -1
+	authorIDString := r.URL.Query().Get("author_id")
+	if authorIDString != "" {
+		authorID, err = strconv.Atoi(authorIDString)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, "Invalid author ID")
+			return
+		}
+	}
+
 	chirps := []Chirp{}
 	for _, dbChirp := range dbChirps {
+		if authorID != -1 && dbChirp.AuthorID != authorID {
+			continue
+		}
+
 		chirps = append(chirps, Chirp{
-			ID:  		dbChirp.ID,
-			AuthorID: 	dbChirp.AuthorID,
-			Body: 		dbChirp.Body,
+			ID:       dbChirp.ID,
+			AuthorID: dbChirp.AuthorID,
+			Body:     dbChirp.Body,
 		})
 	}
 
